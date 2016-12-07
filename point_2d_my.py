@@ -1,12 +1,53 @@
 import math
 from line_2d_my import Line
 
-
+##########################################################
+# This module is a 2d point obejct with the coordinate 
+# of the x y cooridnate. This has several functions in 
+# point operation. Find the distance between two points.
+# Sum the value of two points. Check the equality to 
+# two points. Scale the number of the coordinates with
+# a multiplier value. Obtain a line function from this
+# to another point.
+##########################################################
 class Point():
+    # Field:
+    #   store the x, y coordiante of the point
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
+    # Parameter:
+    #   New x cooridnate value
+    # Return:
+    #   Change the x coordinate to the new x coordiante
+    def set_x(self, x):
+        self.x = x
+
+    # Parameter:
+    #   New x cooridnate value
+    # Return:
+    #   Change the x coordinate to the new x coordiante
+    def set_y(self, y):
+        self.y = y
+
+    # Return the value of the x cooridnate
+    def get_x(self):
+        return self.x
+
+    # Return the value of the y cooridnate
+    def get_y(self):
+        return self.y
+
+    # Print out the value of the x,y coordinate on the console
+    def show_value(self):
+        print('x: ' + self.x + '; y: ' + self.y + '\n')
+
+    
+    def scale_point(self, multiplier):
+        self.x *= multiplier
+        self.y *= multiplier
+    
     def point_equal_check(self, point_to_go):
         if self.x == point_to_go.x and self.y == point_to_go.y:
             return True
@@ -19,22 +60,6 @@ class Point():
             return True
         else:
             return False
-
-    def set_x(self, x):
-        self.x = x
-
-    def set_y(self, y):
-        self.y = y
-
-    def scale_point(self, multiplier):
-        self.x *= multiplier
-        self.y *= multiplier
-
-    def get_x(self):
-        return self.x
-
-    def get_y(self):
-        return self.y
 
     def add_point(self, point, magnitude):
         self.x += point.x * magnitude

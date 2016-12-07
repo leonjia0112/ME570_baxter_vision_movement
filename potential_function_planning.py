@@ -2,8 +2,10 @@ import numpy as np
 import math
 import matplotlib
 
+# The two modules are local ignore the error
 from point_2d_my import Point
 from line_2d_my import Line
+
 
 ATTRACTION_COEFFICIENT = 1
 REPULSIVE_RANGE = 3
@@ -13,6 +15,7 @@ TOTAL_STEP = 1000
 TARGET_RANGE = 1
 INITIAL_DISTANCE_VALUE = 1000
 REPULSIVE_POLY_MULTIPLIER = 3
+
 
 def find_angle(point_1, point_2):
     delta_y = point_2.y - point_1.y
@@ -76,18 +79,20 @@ def inclusion_finder(polygon, vertex_index):
 
     return all_points_included
 
+
 def polygon_concave_convex_conversion(polygon):
     mark = []
     mark_double = []
     start = 0
+    concave_start = 0
     delete = []
-    for i in range(len(polygon))
-        mark.append(inclusion_finder(polygon, n))
+    for i in range(len(polygon)):
+        mark.append(inclusion_finder(polygon, i))
     for i in range(len(mark) * 2):
         mark_double.append(mark[i % len(mark)])
     for i in range(1, len(mark_double)):
         initialized = False
-        if mark_double[i] and mark_double[i -1]:
+        if mark_double[i] and mark_double[i - 1]:
             initialized = True
         if not mark_double[i] and initialized:
             start = i
@@ -99,7 +104,7 @@ def polygon_concave_convex_conversion(polygon):
             concave_start = i
 
         if case and mark_double[i] and mark_double[i - 1]:
-            for j in range(start + 1, i - 2):
+            for j in range(concave_start + 1, i - 2):
                 delete.append(j % len(mark))
             case = False
     delete = delete_duplicate_number(delete)
@@ -108,6 +113,7 @@ def polygon_concave_convex_conversion(polygon):
         if i not in delete:
             new_polygon.append(polygon[i])
     return new_polygon
+
 
 # parameter
 #   a list with integers
@@ -148,6 +154,7 @@ def repulsive_poly_point(point_center, point_a, point_b):
     # print(x, '; ', y)
     return new_point
 
+
 def repulsive_poly(polygon):
     new_polygon = list()
     ref_point = list()
@@ -157,7 +164,7 @@ def repulsive_poly(polygon):
     ref_point.append(0)
     ref_point.append(1)
 
-    #for i in ref_point:
+    # for i in ref_point:
     #    print(i)
     for n in ref_point:
         print(n)
@@ -173,9 +180,8 @@ def repulsive_poly(polygon):
         point_temp = polygon[ref_point[n]]
         point_previous = polygon[ref_point[n - 1]]
         point_next = polygon[ref_point[n + 1]]
-        new_polygon.append(repulsive_poly_point(point_temp,  , point_next))
+        new_polygon.append(repulsive_poly_point(point_temp, point_previous, point_next))
     return new_polygon
-
 
 
 def closest_point_obstacle(point_test, polygon):
