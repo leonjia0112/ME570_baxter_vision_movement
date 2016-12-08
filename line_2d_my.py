@@ -1,5 +1,7 @@
 import numpy as np
-from point_2d_my import Point
+# from point_2d_my import Point
+import matplotlib.pyplot as plt
+
 
 # This class is operating a line function in 2 dimension with the line function as ay + bx + c = 0
 # This class manipulate several functionality. Check the point whether is on this line or not. Find
@@ -7,9 +9,9 @@ from point_2d_my import Point
 class Line():
     def __init__(self, a, b, c):
         # line function type: ay + bx + c = 0
-        self.a = a
-        self.b = b
-        self.c = c
+        self.a = float(a)
+        self.b = float(b)
+        self.c = float(c)
 
     # Parameter:
     #   A point object
@@ -25,11 +27,23 @@ class Line():
     # Return:
     #   A line object that is orthogonal to this line and cross the point
     def orthogonal_line_cross_point(self, point_to_go):
-        slope = - self.b / self.a
+
         # intercept = - self.c / self.a
-        orthogonal_slope =  - 1 / slope
-        orthogonal_intercept = point_to_go.y + 1 / slope * point_to_go.x
-        orthogonal_line = Line(1, - orthogonal_slope, - orthogonal_intercept)
+        if self.a == 0:
+            orthogonal_a = 1
+            orthogonal_b = 0
+            orthogonal_c = - point_to_go.x
+        elif self.b == 0:
+            orthogonal_a = 0
+            orthogonal_b = 1
+            orthogonal_c = - point_to_go.y
+        else:
+            slope = - self.b / self.a
+            orthogonal_slope = - 1 / slope
+            orthogonal_a = 1
+            orthogonal_b = - orthogonal_slope
+            orthogonal_c = - point_to_go.y + 1 / orthogonal_slope * point_to_go.x
+        orthogonal_line = Line(orthogonal_a, orthogonal_b, orthogonal_c)
         return orthogonal_line
 
     # Parameter:
@@ -41,7 +55,28 @@ class Line():
         b1 = other_line.b
         c1 = other_line.c
         left = np.array([[self.b, self.a], [b1, a1]])
-        right = np.array([[self.c], [c1]])
+        right = np.array([[- self.c], [- c1]])
         solution = np.linalg.solve(left, right)
-        interception_point = Point(solution[1], solution[2])
+        interception_point = [solution[0], solution[1]]
         return interception_point
+
+    def show_line_function(self):
+        line_function = repr(self.a) + '*y + ' + repr(self.b) + '*x + ' + repr(self.c) + '= 0'
+        print(line_function)
+
+    def plot_line(self):
+
+        x = []
+        y = []
+
+        if self.a == 0:
+            x = [-self.c, -self.c]
+            y = [-10, 10]
+        elif self.b == 0:
+            x = [-10, 10]
+            y = [-self.c, -self.c]
+        else:
+            for n in list(range(-10, 10)):
+                x.append(n)
+                y.append(-self.b / self.a * n - self.c / self.a)
+        plt.plot(x, y, 'r-')

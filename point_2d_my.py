@@ -1,5 +1,7 @@
 import math
-from line_2d_my import Line
+import matplotlib.pyplot as plt
+# from line_2d_my import Line
+
 
 ##########################################################
 # This module is a 2d point obejct with the coordinate 
@@ -10,24 +12,24 @@ from line_2d_my import Line
 # a multiplier value. Obtain a line function from this
 # to another point.
 ##########################################################
-class Point():
+class Point:
     # Field:
     #   store the x, y coordiante of the point
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
 
     # Parameter:
     #   New x cooridnate value
     # Return:
-    #   Change the x coordinate to the new x coordiante
+    #   Change the x coordinate to the new x cooridnate
     def set_x(self, x):
         self.x = x
 
     # Parameter:
     #   New x cooridnate value
     # Return:
-    #   Change the x coordinate to the new x coordiante
+    #   Change the x coordinate to the new x cooridnate
     def set_y(self, y):
         self.y = y
 
@@ -41,9 +43,8 @@ class Point():
 
     # Print out the value of the x,y coordinate on the console
     def show_value(self):
-        print('x: ' + self.x + '; y: ' + self.y + '\n')
+        print('x: ' + repr(self.x) + '; y: ' + repr(self.y) + '\n')
 
-    
     def scale_point(self, multiplier):
         self.x *= multiplier
         self.y *= multiplier
@@ -74,9 +75,39 @@ class Point():
         return math.sqrt((self.x - point_to_go.x)**2 + (self.y - point_to_go.y)**2)
 
     def find_line_point_to_point(self, point_to_go):
-        m = (point_to_go.y - self.y) / (point_to_go.x - self.x)
-        h = - m * self.x + self.y
-        a = 1
-        b = - m
-        c = - h
-        return Line(a, b, c)
+        if self.x == point_to_go.x:
+            a = 1
+            b = 0
+            c = self.x
+        elif self.y ==  point_to_go.y:
+            a = 0
+            b = 1
+            c = self.y
+        else:
+            m = (point_to_go.y - self.y) / (point_to_go.x - self.x)
+            h = - m * self.x + self.y
+            a = 1
+            b = - m
+            c = - h
+        line_cross_two_points = [a, b, c]
+        return line_cross_two_points
+
+    def find_angle(self, point_2):
+        delta_y = point_2.y - self.y
+        delta_x = point_2.x - self.x
+        length = math.sqrt(delta_x*delta_x + delta_y*delta_y)
+        angle = math.asin(delta_y/length)
+
+        if delta_x < 0 < delta_y:
+            angle = math.pi - angle
+        elif delta_x < 0 and delta_y < 0:
+            angle = - math.pi - angle
+        elif delta_x < 0 and delta_y == 0:
+            angle = math.pi
+        print(angle)
+        return angle
+
+    def plot_line_between_two_points(self, point):
+        x = [self.x, point.x]
+        y = [self.y, point.y]
+        plt.plot(x, y, '-r')

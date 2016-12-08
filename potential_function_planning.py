@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import matplotlib
+import matplotlib.pyplot as plt
 
 # The two modules are local ignore the error
 from point_2d_my import Point
@@ -17,6 +17,10 @@ INITIAL_DISTANCE_VALUE = 1000
 REPULSIVE_POLY_MULTIPLIER = 3
 
 
+# Parameter:
+#   two points
+# Return:
+#   the angle of the line segment of these points
 def find_angle(point_1, point_2):
     delta_y = point_2.y - point_1.y
     delta_x = point_2.x - point_1.x
@@ -33,6 +37,11 @@ def find_angle(point_1, point_2):
     return angle
 
 
+# Parameter:
+#   angle to test inclusion, included angle by previous angle and next angle
+# Return:
+#   True if the angle is within the two angles
+#   False if the angle is outside the two angle
 def test_one_angle_inclusion(angle_pre, angle_next, angle_test):
     is_included = False
     if angle_pre > angle_next:
@@ -115,6 +124,35 @@ def polygon_concave_convex_conversion(polygon):
     return new_polygon
 
 
+# Parameter:
+#   A list of polygon vertices
+# Return:
+#   Plot the polygon
+def polygon_plot(my_polygon):
+    x = []
+    y = []
+    for i in range(len(my_polygon)):
+        x.append(my_polygon[i])
+        y.append(my_polygon[i])
+    x.append(my_polygon[0].x)
+    y.append(my_polygon[0].y)
+    plt.plot(x, y, 'r-')
+    plt.axis([0, 20, 0, 20])
+
+
+def main():
+    p_1 = Point(1, 1)
+    p_2 = Point(10, 1)
+    p_3 = Point(10, 10)
+    p_4 = Point(1, 10)
+    p_5 = Point(5, 5)
+
+    polygon = [p_1, p_2, p_3, p_4, p_5]
+    polygon_plot(polygon)
+    convex_polygon = polygon_concave_convex_conversion(polygon)
+    polygon_plot(convex_polygon)
+
+
 # parameter
 #   a list with integers
 # return
@@ -157,10 +195,10 @@ def repulsive_poly_point(point_center, point_a, point_b):
 
 def repulsive_poly(polygon):
     new_polygon = list()
-    ref_point = list()
+    ref_point = []
     for i in range(0, len(polygon)):
-
         ref_point.append(i)
+
     ref_point.append(0)
     ref_point.append(1)
 
@@ -185,17 +223,19 @@ def repulsive_poly(polygon):
 
 
 def closest_point_obstacle(point_test, polygon):
-    ref_point = list
+    ref_point = []
     distance = INITIAL_DISTANCE_VALUE
     for n in range(len(polygon) + 1):
         ref_point.append(n % len(polygon))
-    distance = list
+
+    # distance = list
     closest_point_on_obstacle = Point(0, 0)
     for n in range(len(polygon)):
         # line_temp = polygon[n].find_line_point_to_point(polygon[n + 1])
         # distance.append(point_test, line_temp)
         point_obstacle = closest_point_to_line(point_test, polygon[ref_point[n]], polygon[ref_point[n + 1]])
         if point_test.find_distance_between_points(point_obstacle) < distance:
+            distance = point_test.find_distance_between_points(point_obstacle)
             closest_point_on_obstacle.x = point_obstacle.x
             closest_point_on_obstacle.y = point_obstacle.y
     return closest_point_on_obstacle
