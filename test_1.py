@@ -8,8 +8,8 @@ from line_2d_my import Line
 
 
 ATTRACTION_COEFFICIENT = 1
-REPULSIVE_RANGE = 5
-REPULSIVE_COEFFICIENT = 1
+REPULSIVE_RANGE = 2
+REPULSIVE_COEFFICIENT = 50
 STEP_SIZE = 0.1
 TOTAL_STEP = 1000
 TARGET_RANGE = 1
@@ -46,6 +46,7 @@ def test_one_angle_inclusion(angle_pre, angle_next, angle_test):
     is_included = False
     if angle_pre > angle_next:
         if angle_next <= angle_test <= angle_pre:
+            is_included = True
             is_included = True
     elif angle_next > angle_pre:
         if -math.pi <= angle_test <= angle_pre or angle_next <= angle_test <= math.pi:
@@ -215,18 +216,19 @@ def repulsive_poly(polygon):
 def closest_point_to_line(point_test, line_point_1, line_point_2):
     line_temp_list = line_point_1.find_line_point_to_point(line_point_2)
     line_temp = Line(line_temp_list[0], line_temp_list[1], line_temp_list[2])
-    line_temp.show_line_function()
+    # line_temp.show_line_function()
     # line_temp.plot_line()
     orthogonal_line = line_temp.orthogonal_line_cross_point(point_test)
-    orthogonal_line.show_line_function()
+    # orthogonal_line.show_line_function()
     # orthogonal_line.plot_line()
     # orthogonal_line = Line(orthogonal_line_list[0], orthogonal_line_list[1], orthogonal_line_list[2])
     projection_point_list = line_temp.interception_between_two_lines(orthogonal_line)
     projection_point = Point(projection_point_list[0][0], projection_point_list[1][0])
-    projection_point.show_value()
+    # projection_point.show_value()
     # obstacle_point = Point(0, 0)
     if line_temp.check_point_on_line(point_test):
-        if line_point_1.x <= point_test.x <= line_point_2.x or line_point_2.x <= point_test.x <= line_point_2.x:
+        if (line_point_1.x <= point_test.x <= line_point_2.x or line_point_2.x <= point_test.x <= line_point_2.x) and\
+                (line_point_1.y <= point_test.y <= line_point_2.y or line_point_2.y <= point_test.y <= line_point_2.y):
             obstacle_point = point_test
         else:
             distance_point_1 = point_test.find_distance_between_points(line_point_1)
@@ -236,8 +238,10 @@ def closest_point_to_line(point_test, line_point_1, line_point_2):
                 obstacle_point = line_point_1
             else:
                 obstacle_point = line_point_2
-    elif line_point_1.x <= projection_point.x <= line_point_2.x or \
-            line_point_1.x >= projection_point.x >= line_point_2.x:
+    elif (line_point_1.x <= projection_point.x <= line_point_2.x or
+            line_point_1.x >= projection_point.x >= line_point_2.x) and\
+            (line_point_1.y <= projection_point.y <= line_point_2.y or
+            line_point_1.y >= projection_point.y >= line_point_2.y):
         obstacle_point = projection_point
     else:
         distance_point_1 = point_test.find_distance_between_points(line_point_1)
@@ -279,9 +283,9 @@ def repulsive_force(point_to_test, point_obstacle, polygon_obs):
     distance = point_to_test.find_distance_between_points(point_obstacle)
     repulsive_vector = Point(0, 0)
     if distance <= REPULSIVE_RANGE:
-        repulsive_magnitude = 0.5 * REPULSIVE_COEFFICIENT * (1 / REPULSIVE_RANGE + 1 / distance) * (1 / distance ** 2)
-        repulsive_vector.set_x = (point_to_test.x - point_obstacle.x) * repulsive_magnitude
-        repulsive_vector.set_y = (point_to_test.y - point_obstacle.y) * repulsive_magnitude
+        repulsive_magnitude = (0.5*REPULSIVE_COEFFICIENT)*((1/REPULSIVE_RANGE) + (1/distance))*(1/distance**2)
+        repulsive_vector.set_x((point_to_test.x - point_obstacle.x) * repulsive_magnitude)
+        repulsive_vector.set_y((point_to_test.y - point_obstacle.y) * repulsive_magnitude)
 
     return repulsive_vector
 
@@ -292,21 +296,43 @@ def total_potential_force(att_vector, rep_vector):
 
 
 def potential_get_path(polygon, point_start, point_goal):
-    path = [point_start]
+    path = [Point(point_start.x, point_start.y)]
     point_current = point_start
     step = 0
-    while not point_current.point_equal_check_in_range(point_goal) or step < TOTAL_STEP:
+    while point_current.find_distance_between_points(point_goal) >= TARGET_RANGE and step <= TOTAL_STEP:
         att_vector = attraction_force(point_current, point_goal)
         point_obstacle = closest_point_to_obstacle(point_current, polygon)
-        if point_current.find_distance_between_points(point_obstacle) < REPULSIVE_RANGE:
+        print('current \npoint obstacle\nattraction\nrepulsive')
+        point_current.show_value()
+        point_obstacle.show_value()
+        # print(point_current.find_distance_between_points(point_obstacle))
+        if point_current.find_distance_between_points(point_obstacle) <= REPULSIVE_RANGE:
             rep_vector = repulsive_force(point_current, point_obstacle, polygon)
         else:
             rep_vector = Point(0, 0)
+        att_vector.show_value()
+        rep_vector.show_value()
         total_vector = total_potential_force(att_vector, rep_vector)
+        # force_ponit = po
+        # point_current.plot_line_between_two_point()
+        # point_current.show_value()
         point_current.add_point(total_vector, STEP_SIZE)
-        path.append(point_current)
+        #point_current.show_value()
+        path.append(Point(point_current.x, point_current.y))
         step += 1
+
     return path
+
+
+def plot_path(path):
+    x = []
+    y = []
+    for p in path:
+        # print(p.x, p.y)
+        x.append(p.x)
+        y.append(p.y)
+
+    plt.plot(x, y, 'r-')
 
 
 def main():
@@ -332,13 +358,16 @@ def main():
 
     #p_obs.show_value()
     #p.plot_line_between_two_points(p_obs)
-    plt.axis([-10, 20, -10, 20])
+    plt.axis([-20, 20, -20, 20])
     # projection_point = closest_point_to_line(Point(0, 3), Point(0, -1), Point(3, 2))
     # projection_point.show_value()
-    point_start = Point(-5, 5)
+    point_start = Point(-5, -5)
     point_goal = Point(18, 0)
     path = potential_get_path(safe_range_polygon, point_start, point_goal)
     polygon_plot(safe_range_polygon, 'g-')
+    plot_path(path)
+    #for p in path:
+    #    print(p.x, p.y)
     plt.show()
 
 
