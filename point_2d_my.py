@@ -2,6 +2,8 @@ import math
 import matplotlib.pyplot as plt
 # from line_2d_my import Line
 
+REPULSIVE_POLY_MULTIPLIER = 3
+
 
 ##########################################################
 # This module is a 2d point obejct with the coordinate 
@@ -41,6 +43,9 @@ class Point:
     def get_y(self):
         return self.y
 
+    def plot_point(self):
+        plt.plot(self.x, self.y, 'r*')
+
     # Print out the value of the x,y coordinate on the console
     def show_value(self):
         print('x: ' + repr(self.x) + '; y: ' + repr(self.y) + '\n')
@@ -76,19 +81,19 @@ class Point:
 
     def find_line_point_to_point(self, point_to_go):
         if self.x == point_to_go.x:
-            a = 1
-            b = 0
-            c = self.x
-        elif self.y ==  point_to_go.y:
             a = 0
             b = 1
+            c = self.x
+        elif self.y == point_to_go.y:
+            a = 1
+            b = 0
             c = self.y
         else:
             m = (point_to_go.y - self.y) / (point_to_go.x - self.x)
-            h = - m * self.x + self.y
+            h = m * self.x - self.y
             a = 1
             b = - m
-            c = - h
+            c = h
         line_cross_two_points = [a, b, c]
         return line_cross_two_points
 
@@ -104,10 +109,36 @@ class Point:
             angle = - math.pi - angle
         elif delta_x < 0 and delta_y == 0:
             angle = math.pi
-        print(angle)
+        # print(angle)
         return angle
 
     def plot_line_between_two_points(self, point):
         x = [self.x, point.x]
         y = [self.y, point.y]
         plt.plot(x, y, '-r')
+
+    def repulsive_poly_point(self, point_a, point_b, multiplier):
+        angle_center_a = self.find_angle(point_a)
+        angle_center_b = self.find_angle(point_b)
+
+        # debug print
+        # print(angle_center_a)
+        # print(angle_center_b)
+
+        angle_new = (angle_center_a + angle_center_b) / 2
+        if angle_center_a > angle_center_b:
+            if angle_new == math.pi:
+                angle_new = 0
+            elif angle_new == 0:
+                angle_new = math.pi
+            elif angle_new > 0:
+                angle_new -= math.pi
+            elif angle_new < 0:
+                angle_new += math.pi
+
+        x = math.cos(angle_new) * multiplier + self.x
+        y = math.sin(angle_new) * multiplier + self.y
+        new_point = Point(x, y)
+
+        # print(x, '; ', y)
+        return new_point

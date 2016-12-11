@@ -19,8 +19,22 @@ class Line():
     #   True if the point is on this line
     #   False if the point is not on this line
     def check_point_on_line(self, point_to_go):
-        y = - self.b/self.a*point_to_go.x - self.c/self.a
-        return y == point_to_go.y
+        if self.a == 0:
+            if -self.c == point_to_go.x:
+                return True
+            else:
+                return False
+        elif self.b == 0:
+            if -self.c == point_to_go.y:
+                return True
+            else:
+                return False
+        else:
+            y = - self.b/self.a*point_to_go.x - self.c/self.a
+            if y == point_to_go.y:
+                return True
+            else:
+                return False
 
     # Parameter:
     #   A point object
@@ -32,17 +46,17 @@ class Line():
         if self.a == 0:
             orthogonal_a = 1
             orthogonal_b = 0
-            orthogonal_c = - point_to_go.x
+            orthogonal_c = - point_to_go.y
         elif self.b == 0:
             orthogonal_a = 0
             orthogonal_b = 1
-            orthogonal_c = - point_to_go.y
+            orthogonal_c = - point_to_go.x
         else:
-            slope = - self.b / self.a
-            orthogonal_slope = - 1 / slope
+            # slope = - self.b / self.a
+            # orthogonal_slope = - 1 / slope
             orthogonal_a = 1
-            orthogonal_b = - orthogonal_slope
-            orthogonal_c = - point_to_go.y + 1 / orthogonal_slope * point_to_go.x
+            orthogonal_b = self.a / self.b
+            orthogonal_c = - point_to_go.y + (self.a / self.b) * point_to_go.x
         orthogonal_line = Line(orthogonal_a, orthogonal_b, orthogonal_c)
         return orthogonal_line
 

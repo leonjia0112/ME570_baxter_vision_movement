@@ -1,5 +1,8 @@
 from point_2d_my import Point
+from polygon_my import Polygon
+
 import matplotlib.pyplot as plt
+
 p_1 = Point(2, 1)
 p_2 = Point(10, 1)
 p_3 = Point(10, 10)
@@ -9,32 +12,19 @@ p_6 = Point(6, 6)
 p_7 = Point(6, 4)
 p_8 = Point(1, 2)
 
-polygon = [p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8]
-x = []
-y = []
+polygon = Polygon()
+polygon.add_point(p_1)
+polygon.add_point(p_2)
+polygon.add_point(p_3)
+polygon.add_point(p_4)
+polygon.add_point(p_5)
+polygon.add_point(p_6)
+polygon.add_point(p_7)
+polygon.add_point(p_8)
 
-for p in polygon:
-    x.append(p.x)
-    y.append(p.y)
 
-def polygon_plot(my_polygon, plot_type):
-    x = []
-    y = []
-    for i in range(len(my_polygon)):
-        x.append(my_polygon[i].x)
-        y.append(my_polygon[i].y)
-    x.append(my_polygon[0].x)
-    y.append(my_polygon[0].y)
-
-    plt.plot(x, y, plot_type)
-    plt.axis([-10, 20, -10, 20])
-
-sum_x = sum(x)
-sum_y = sum(y)
-c_x = sum_x/len(x)
-c_y = sum_y/len(y)
-polygon_plot(polygon, 'r-')
-plt.plot(c_x, c_y, 'b*')
-print(c_x, c_y)
+polygon.polygon_plot('r-')
+poly_centroid = polygon.get_polygon_centroid()
+poly_centroid.show_value()
 plt.show()
 

@@ -132,6 +132,7 @@ def polygon_concave_convex_conversion(polygon):
     return new_polygon
 
 
+# Method added to polygon object
 def polygon_plot(my_polygon, plot_type):
     x = []
     y = []
@@ -335,6 +336,20 @@ def plot_path(path):
     plt.plot(x, y, 'r-')
 
 
+# Method added to polygon object
+def get_polygon_centroid(polygon):
+    x = []
+    y = []
+    for p in polygon:
+        x.append(p.x)
+        y.append(p.y)
+    sum_x = sum(x)
+    sum_y = sum(y)
+    c_x = sum_x / len(x)
+    c_y = sum_y / len(y)
+    return Point(c_x, c_y)
+
+
 def main():
     p_1 = Point(2, 1)
     p_2 = Point(10, 1)
@@ -351,7 +366,7 @@ def main():
     convex_polygon = polygon_concave_convex_conversion(polygon)
     # polygon_plot(convex_polygon, 'r-')
     safe_range_polygon = repulsive_poly(convex_polygon)
-
+    point_centroid = get_polygon_centroid(safe_range_polygon)
     # plt.show()
     p = Point(-5, -5)
     #p_obs = closest_point_to_obstacle(p, safe_range_polygon)
