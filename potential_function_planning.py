@@ -1,289 +1,129 @@
+#!usr/env/bin python
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import argparse
+import sys
+
+'''
+import rospy
+import baxter_interface
+
+
+# import messages
+from geometry_msgs.msg import (
+    PoseStamped,
+    Pose,
+    Point,
+    Quaternion,
+)
+from std_msgs.msg import Header
+
+# import service
+from baxter_core_msgs.srv import (
+    SolvePositionIK,
+    SolvePositionIKRequest,
+'''
 
 # The two modules are local ignore the error
 from point_2d_my import Point
 from line_2d_my import Line
+from polygon_my import Polygon
 
+ATTRACTION_COEFFICIENT = 4
+REPULSIVE_COEFFICIENT = 35
+REPULSIVE_RANGE = 2
+STEP_SIZE = 0.2
+TOTAL_STEP = 2000
 
-ATTRACTION_COEFFICIENT = 1
-REPULSIVE_RANGE = 3
-REPULSIVE_COEFFICIENT = 1
-STEP_SIZE = 0.1
-TOTAL_STEP = 1000
-TARGET_RANGE = 1
+TARGET_RANGE = 0.5
 INITIAL_DISTANCE_VALUE = 1000
-REPULSIVE_POLY_MULTIPLIER = 3
-
-
-# Parameter:
-#   two points
-# Return:
-#   the angle of the line segment of these points
-def find_angle(point_1, point_2):
-    delta_y = point_2.y - point_1.y
-    delta_x = point_2.x - point_1.x
-    length = math.sqrt(delta_x*delta_x + delta_y*delta_y)
-    angle = math.asin(delta_y/length)
-
-    if delta_x < 0 < delta_y:
-        angle = math.pi - angle
-    elif delta_x < 0 and delta_y < 0:
-        angle = -math.pi - angle
-    elif delta_x < 0 and delta_y == 0:
-        angle = math.pi
-    print(angle)
-    return angle
-
-
-# Parameter:
-#   angle to test inclusion, included angle by previous angle and next angle
-# Return:
-#   True if the angle is within the two angles
-#   False if the angle is outside the two angle
-def test_one_angle_inclusion(angle_pre, angle_next, angle_test):
-    is_included = False
-    if angle_pre > angle_next:
-        if angle_next <= angle_test <= angle_pre:
-            is_included = True
-    elif angle_next > angle_pre:
-        if -math.pi <= angle_test <= angle_pre or angle_next <= angle_test <= math.pi:
-            is_included = True
-    return is_included
-
-
-# parameter:
-#   a polygon and a vertex_index
-# return;
-#   if the angle between the two connected edge contain all the other vertex within the range of angle
-#   return True
-#   else return False
-def inclusion_finder(polygon, vertex_index):
-    if vertex_index-1 < 0:
-        vertex_order_minus = len(polygon) - 1
-    else:
-        vertex_order_minus = vertex_index - 1
-
-    if vertex_index + 1 > len(polygon) - 1:
-        vertex_order_plus = 0
-    else:
-        vertex_order_plus = vertex_index + 1
-
-    point_test = polygon[vertex_index]
-    point_test_minus = polygon[vertex_order_minus]
-    point_test_plus = polygon[vertex_order_plus]
-
-    angle_previous = find_angle(point_test, point_test_minus)
-    angle_next = find_angle(point_test, point_test_plus)
-
-    all_points_included = True
-
-    for n in range(len(polygon)):
-        if n != vertex_index and n != vertex_order_minus and n != vertex_order_plus:
-            angle_temp = find_angle(point_test, polygon[n])
-            if not test_one_angle_inclusion(angle_previous, angle_next, angle_temp):
-                all_points_included = False
-                break
-
-    return all_points_included
-
-
-def polygon_concave_convex_conversion(polygon):
-    mark = []
-    mark_double = []
-    start = 0
-    concave_start = 0
-    delete = []
-    for i in range(len(polygon)):
-        mark.append(inclusion_finder(polygon, i))
-    for i in range(len(mark) * 2):
-        mark_double.append(mark[i % len(mark)])
-    for i in range(1, len(mark_double)):
-        initialized = False
-        if mark_double[i] and mark_double[i - 1]:
-            initialized = True
-        if not mark_double[i] and initialized:
-            start = i
-            break
-    case = False
-    for i in range(start, len(mark_double)):
-        if not mark_double[i] and not case:
-            case = True
-            concave_start = i
-
-        if case and mark_double[i] and mark_double[i - 1]:
-            for j in range(concave_start + 1, i - 2):
-                delete.append(j % len(mark))
-            case = False
-    delete = delete_duplicate_number(delete)
-    new_polygon = []
-    for i in range(len(polygon)):
-        if i not in delete:
-            new_polygon.append(polygon[i])
-    return new_polygon
-
-
-# Parameter:
-#   A list of polygon vertices
-# Return:
-#   Plot the polygon
-def polygon_plot(my_polygon):
-    x = []
-    y = []
-    for i in range(len(my_polygon)):
-        x.append(my_polygon[i])
-        y.append(my_polygon[i])
-    x.append(my_polygon[0].x)
-    y.append(my_polygon[0].y)
-    plt.plot(x, y, 'r-')
-    plt.axis([0, 20, 0, 20])
-
-
-def main():
-    p_1 = Point(1, 1)
-    p_2 = Point(10, 1)
-    p_3 = Point(10, 10)
-    p_4 = Point(1, 10)
-    p_5 = Point(5, 5)
-
-    polygon = [p_1, p_2, p_3, p_4, p_5]
-    polygon_plot(polygon)
-    convex_polygon = polygon_concave_convex_conversion(polygon)
-    polygon_plot(convex_polygon)
-
-
-# parameter
-#   a list with integers
-# return
-#   a new list that is sorted and remove all the element that occurs more than once in the list
-def delete_duplicate_number(my_list):
-    list.sort(my_list)
-    delete_list = my_list[0]
-    for i in range(1, len(my_list)):
-        if my_list[i] != my_list[i - 1]:
-            delete_list.append(my_list[i])
-    return delete_list
-
-
-def repulsive_poly_point(point_center, point_a, point_b):
-    angle_center_a = find_angle(point_center, point_a)
-    angle_center_b = find_angle(point_center, point_b)
-
-    # debug print
-    # print(angle_center_a)
-    # print(angle_center_b)
-
-    angle_new = (angle_center_a + angle_center_b)/2
-    if angle_center_a > angle_center_b:
-        if angle_new == math.pi:
-            angle_new = 0
-        elif angle_new == 0:
-            angle_new = math.pi
-        elif angle_new > 0:
-            angle_new -= math.pi
-        elif angle_new < 0:
-            angle_new += math.pi
-
-    x = math.cos(angle_new) * REPULSIVE_POLY_MULTIPLIER + point_center.x
-    y = math.sin(angle_new) * REPULSIVE_POLY_MULTIPLIER + point_center.y
-    new_point = Point(x, y)
-
-    # print(x, '; ', y)
-    return new_point
-
-
-def repulsive_poly(polygon):
-    new_polygon = list()
-    ref_point = []
-    for i in range(0, len(polygon)):
-        ref_point.append(i)
-
-    ref_point.append(0)
-    ref_point.append(1)
-
-    # for i in ref_point:
-    #    print(i)
-    for n in ref_point:
-        print(n)
-    for n in range(1, len(polygon) + 1):
-        print(n)
-
-    for n in range(1, len(polygon) + 1):
-
-        # debug print
-        # print(n)
-        print(ref_point[n], ref_point[n-1], ref_point[n+1], '\n')
-
-        point_temp = polygon[ref_point[n]]
-        point_previous = polygon[ref_point[n - 1]]
-        point_next = polygon[ref_point[n + 1]]
-        new_polygon.append(repulsive_poly_point(point_temp, point_previous, point_next))
-    return new_polygon
-
-
-def closest_point_obstacle(point_test, polygon):
-    ref_point = []
-    distance = INITIAL_DISTANCE_VALUE
-    for n in range(len(polygon) + 1):
-        ref_point.append(n % len(polygon))
-
-    # distance = list
-    closest_point_on_obstacle = Point(0, 0)
-    for n in range(len(polygon)):
-        # line_temp = polygon[n].find_line_point_to_point(polygon[n + 1])
-        # distance.append(point_test, line_temp)
-        point_obstacle = closest_point_to_line(point_test, polygon[ref_point[n]], polygon[ref_point[n + 1]])
-        if point_test.find_distance_between_points(point_obstacle) < distance:
-            distance = point_test.find_distance_between_points(point_obstacle)
-            closest_point_on_obstacle.x = point_obstacle.x
-            closest_point_on_obstacle.y = point_obstacle.y
-    return closest_point_on_obstacle
+REPULSIVE_POLY_MULTIPLIER = 2
+ALPHA = 0.1
 
 
 def closest_point_to_line(point_test, line_point_1, line_point_2):
-    line_temp = line_point_1.find_line_point_to_point(line_point_2)
+    line_temp_list = line_point_1.find_line_point_to_point(line_point_2)
+    line_temp = Line(line_temp_list[0], line_temp_list[1], line_temp_list[2])
+    # line_temp.show_line_function()
+    # line_temp.plot_line()
     orthogonal_line = line_temp.orthogonal_line_cross_point(point_test)
-    projection_point = line_temp.interception_between_two_lines(orthogonal_line)
+    # orthogonal_line.plot_line()
+    # orthogonal_line.show_line_function()
+    # orthogonal_line.plot_line()
+    # orthogonal_line = Line(orthogonal_line_list[0], orthogonal_line_list[1], orthogonal_line_list[2])
+    projection_point_list = line_temp.interception_between_two_lines(orthogonal_line)
+    projection_point = Point(projection_point_list[0][0], projection_point_list[1][0])
+    # projection_point.plot_point()
+    # projection_point.show_value()
     # obstacle_point = Point(0, 0)
     if line_temp.check_point_on_line(point_test):
-        if line_point_1.x <= point_test.x <= line_point_2.x or line_point_2.x <= point_test.x <= line_point_2.x:
-            obstacle_point = point_test
+        if (line_point_1.x <= point_test.x <= line_point_2.x or line_point_2.x <= point_test.x <= line_point_2.x) and\
+                (line_point_1.y <= point_test.y <= line_point_2.y or line_point_2.y <= point_test.y <= line_point_2.y):
+            obstacle_point = Point(point_test.x, point_test.y)
         else:
             distance_point_1 = point_test.find_distance_between_points(line_point_1)
             distance_point_2 = point_test.find_distance_between_points(line_point_2)
 
             if distance_point_1 < distance_point_2:
-                obstacle_point = line_point_1
+                obstacle_point = Point(line_point_1.x, line_point_1.y)
             else:
-                obstacle_point = line_point_2
-    elif line_point_1.x <= projection_point.x <= line_point_2.x or \
-            line_point_1.x >= projection_point.x >= line_point_2.x:
-        obstacle_point = projection_point
+                obstacle_point = Point(line_point_2.x, line_point_2.y)
+    elif (line_point_1.x - ALPHA <= projection_point.x <= line_point_2.x + ALPHA or
+            line_point_1.x + ALPHA >= projection_point.x >= line_point_2.x - ALPHA) and\
+            (line_point_1.y - ALPHA <= projection_point.y <= line_point_2.y + ALPHA or
+             line_point_1.y + ALPHA >= projection_point.y >= line_point_2.y - ALPHA):
+        obstacle_point = Point(projection_point.x, projection_point.y)
     else:
         distance_point_1 = point_test.find_distance_between_points(line_point_1)
         distance_point_2 = point_test.find_distance_between_points(line_point_2)
 
         if distance_point_1 < distance_point_2:
-            obstacle_point = line_point_1
+            obstacle_point = Point(line_point_1.x, line_point_1.y)
         else:
-            obstacle_point = line_point_2
+            obstacle_point = Point(line_point_2.x, line_point_2.y)
+
     return obstacle_point
 
 
+def closest_point_to_obstacle(point_test, polygon):
+    ref_point = []
+    distance = INITIAL_DISTANCE_VALUE
+    for n in range(polygon.get_length() + 1):
+        ref_point.append(n % polygon.get_length())
+
+    closest_point_on_obstacle = Point(0, 0)
+    for n in range(polygon.get_length()):
+        # line_temp = polygon[n].find_line_point_to_point(polygon[n + 1])
+        # distance.append(point_test, line_temp)
+        # print(ref_point[n], ref_point[n+1])
+        point_obstacle = closest_point_to_line(point_test, polygon.poly[ref_point[n]], polygon.poly[ref_point[n + 1]])
+        if point_test.find_distance_between_points(point_obstacle) < distance:
+            distance = point_test.find_distance_between_points(point_obstacle)
+            closest_point_on_obstacle.x = point_obstacle.x
+            closest_point_on_obstacle.y = point_obstacle.y
+    closest_point_on_obstacle.plot_point()
+    return closest_point_on_obstacle
+
+
 def attraction_force(point_to_test, point_goal):
+    vector_magnitude = point_to_test.find_distance_between_points(point_goal)
     attraction_vector = Point(point_goal.x - point_to_test.x, point_goal.y - point_to_test.y)
-    attraction_vector.scale_point(ATTRACTION_COEFFICIENT)
+    attraction_vector.scale_point(ATTRACTION_COEFFICIENT / vector_magnitude)
     return attraction_vector
 
 
-def repulsive_force(point_to_test, point_obstacle, polygon_obs):
-    distance = point_to_test.find_distance_between_points(point_obstacle)
+def repulsive_force(point_to_test, obs_distance, polygon_centroid, point_obs):
+    # distance_to_obstacle = point_to_test.find_distance_between_points(point_obstacle)
+    # distance_to_center = point_to_test.find_distance_between_points(polygon_centroid)
     repulsive_vector = Point(0, 0)
-    if distance <= REPULSIVE_RANGE:
-        repulsive_magnitude = 0.5 * REPULSIVE_COEFFICIENT * (1 / REPULSIVE_RANGE + 1 / distance) * (1 / distance ** 2)
-        repulsive_vector.set_x = (point_to_test.x - point_obstacle.x) * repulsive_magnitude
-        repulsive_vector.set_y = (point_to_test.y - point_obstacle.y) * repulsive_magnitude
+    # abs_distance = distance_to_center - distance_to_obstacle
+    # if abs_distance <= REPULSIVE_RANGE:
+    repulsive_magnitude = REPULSIVE_COEFFICIENT*(1/(obs_distance**2))
+    # *(1/abs_distance**2)
+    vector_magnitude = point_to_test.find_distance_between_points(polygon_centroid)
+    repulsive_vector.set_x((point_to_test.x - polygon_centroid.x) * repulsive_magnitude / vector_magnitude)
+    repulsive_vector.set_y((point_to_test.y - polygon_centroid.y) * repulsive_magnitude / vector_magnitude)
 
     return repulsive_vector
 
@@ -293,19 +133,198 @@ def total_potential_force(att_vector, rep_vector):
     return total_vector
 
 
-def potential_get_path(polygon, point_start, point_goal):
-    path = [point_start]
-    point_current = point_start
+def potential_get_path(polygon, point_start, point_goal, polygon_centroid):
+    path = [Point(point_start.x, point_start.y)]
+    point_current = Point(point_start.x, point_start.y)
     step = 0
-    while not point_current.point_equal_check_in_range(point_goal) or step < TOTAL_STEP:
+    while point_current.find_distance_between_points(point_goal) >= TARGET_RANGE and step <= TOTAL_STEP:
         att_vector = attraction_force(point_current, point_goal)
-        point_obstacle = closest_point_obstacle(point_current, polygon)
-        if point_current.find_distance_between_points(point_obstacle) < REPULSIVE_RANGE:
-            rep_vector = repulsive_force(point_current, point_obstacle, polygon)
+        point_obstacle = closest_point_to_obstacle(point_current, polygon)
+        # point_obstacle.plot_point()
+        print('current \npoint obstacle\nattraction\nrepulsive')
+        point_current.show_value()
+        # point_obstacle.show_value()
+        # print(point_current.find_distance_between_points(point_obstacle))
+
+        distance_to_obstacle = point_current.find_distance_between_points(point_obstacle)
+        # distance_to_center = point_current.find_distance_between_points(polygon_centroid)
+        # abs_distance = distance_to_center - distance_to_obstacle
+
+        if distance_to_obstacle <= REPULSIVE_RANGE:
+            rep_vector = repulsive_force(point_current, distance_to_obstacle, polygon_centroid, point_obstacle)
         else:
             rep_vector = Point(0, 0)
+
+        # att_vector.show_value()
+        # rep_vector.show_value()
+
         total_vector = total_potential_force(att_vector, rep_vector)
+        # force_point = po
+        # point_current.plot_line_between_two_point()
+        # point_current.show_value()
         point_current.add_point(total_vector, STEP_SIZE)
-        path.append(point_current)
+        # point_current.show_value()
+        path.append(Point(point_current.x, point_current.y))
         step += 1
+
     return path
+
+
+# Parameter:
+#   path contains a sequence of x y coordinate
+# Return:
+#   plot the sequence of dot on a figure
+def plot_path(path):
+    x = []
+    y = []
+    for p in path:
+        # print(p.x, p.y)
+        x.append(p.x)
+        y.append(p.y)
+
+    plt.plot(x, y, 'k-')
+
+'''
+def ik_test(limb):
+    # initialized a node with name
+    rospy.init_node("rsdk_ik_service_client")
+
+    # string variable
+    ns = "ExternalTools/" + limb + "/PositionKinematicsNode/IKService"
+
+    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
+
+    ikreq = SolvePositionIKRequest()
+    hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+
+    poses = {
+        'left': PoseStamped(
+            header=hdr,
+            pose=Pose(
+                position=Point(
+                    x=0.657579481614,
+                    y=0.851981417433,
+                    z=0.0388352386502,
+                ),
+                orientation=Quaternion(
+                    x=-0.366894936773,
+                    y=0.885980397775,
+                    z=0.108155782462,
+                    w=0.262162481772,
+                ),
+            ),
+        ),
+        'right': PoseStamped(
+            header=hdr,
+            pose=Pose(
+                position=Point(
+                    x=0.656982770038,
+                    y=-0.852598021641,
+                    z=0.0388609422173,
+                ),
+                orientation=Quaternion(
+                    x=0.367048116303,
+                    y=0.885911751787,
+                    z=-0.108908281936,
+                    w=0.261868353356,
+                ),
+            ),
+        ),
+    }
+
+    ikreq.pose_stamp.append(poses[limb])
+
+    try:
+        rospy.wait_for_service(ns, 5.0)
+        resp = iksvc(ikreq)
+    except (rospy.ServiceException, rospy.ROSException), e:
+        rospy.logerr("Service call failed: %s" % (e,))
+        return 1
+
+    if (resp.isValid[0]):
+        print("SUCCESS - Valid Joint Solution Found:")
+        # Format solution into Limb API-compatible dictionary
+        limb_joints = dict(zip(resp.joints[0].name, resp.joints[0].position))
+        print(limb_joints)
+    else:
+        print("INVALID POSE - No Valid Joint Solution Found.")
+
+    return limb_joints
+'''
+
+def main():
+
+    '''
+    # Baxter Setup
+    """RSDK Joint Position Waypoints Example
+
+        Records joint positions each time the navigator 'OK/wheel'
+        button is pressed.
+        Upon pressing the navigator 'Rethink' button, the recorded joint positions
+        will begin playing back in a loop.
+        """
+    arg_fmt = argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(formatter_class=arg_fmt,
+                                     description=main.__doc__)
+    required = parser.add_argument_group('required arguments')
+    required.add_argument(
+        '-l', '--limb', required=True, choices=['left', 'right'],
+        help='limb to record/playback waypoints'
+    )
+    parser.add_argument(
+        '-s', '--speed', default=0.3, type=float,
+        help='joint position motion speed ratio [0.0-1.0] (default:= 0.3)'
+    )
+    parser.add_argument(
+        '-a', '--accuracy',
+        default=baxter_interface.settings.JOINT_ANGLE_TOLERANCE, type=float,
+        help='joint position accuracy (rad) at which waypoints must achieve'
+    )
+    args = parser.parse_args(rospy.myargv()[1:])
+
+    print("Initializing node... ")
+
+    # initialized node
+    rospy.init_node("rsdk_joint_position_waypoints_%s" % (args.limb,))
+    '''
+
+    p_1 = Point(2, -4)
+    p_2 = Point(10, -4)
+    p_3 = Point(10, 10)
+    p_4 = Point(2, 10)
+    p_5 = Point(0, 8)
+    p_6 = Point(6, 6)
+    p_7 = Point(6, 2)
+    p_8 = Point(0, -1)
+
+    polygon = Polygon()
+    polygon.add_point(p_1)
+    polygon.add_point(p_2)
+    polygon.add_point(p_3)
+    polygon.add_point(p_4)
+    polygon.add_point(p_5)
+    polygon.add_point(p_6)
+    polygon.add_point(p_7)
+    polygon.add_point(p_8)
+
+    polygon.polygon_plot('r-')
+    convex_polygon = polygon.concave_convex_conversion()
+    convex_polygon.polygon_plot('g-')
+    safe_range_polygon = convex_polygon.repulsive_poly(REPULSIVE_POLY_MULTIPLIER)
+    safe_range_polygon.polygon_plot('b-')
+    point_centroid = safe_range_polygon.get_polygon_centroid()
+
+    # p = Point(-5, -5)
+    point_centroid.plot_point()
+    point_start = Point(-5, 5)
+    # p_obs = closest_point_to_obstacle(point_start, safe_range_polygon)
+    # point_start.plot_point()
+    # p_obs.plot_point()
+    point_goal = Point(12, -8)
+    point_goal.plot_point()
+    path = potential_get_path(safe_range_polygon, point_start, point_goal, point_centroid)
+    plot_path(path)
+    plt.show()
+
+
+main()

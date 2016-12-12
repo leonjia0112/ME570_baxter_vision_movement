@@ -52,11 +52,15 @@ class Line():
             orthogonal_b = 1
             orthogonal_c = - point_to_go.x
         else:
-            # slope = - self.b / self.a
-            # orthogonal_slope = - 1 / slope
+            # ay + bx + c = 0
+            # y = -bx/a - c/a
+            # y = ax/b + h
+            # h = y0 - ax0/b
+            # y = ax/b + y0 - ax0/b
+            # y - ax/b - y0 + ax0/b = 0
             orthogonal_a = 1
-            orthogonal_b = self.a / self.b
-            orthogonal_c = - point_to_go.y + (self.a / self.b) * point_to_go.x
+            orthogonal_b = - self.a / self.b
+            orthogonal_c = - point_to_go.y + (self.a * point_to_go.x / self.b)
         orthogonal_line = Line(orthogonal_a, orthogonal_b, orthogonal_c)
         return orthogonal_line
 

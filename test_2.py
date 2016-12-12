@@ -47,7 +47,7 @@ def closest_point_to_line(point_test, line_point_1, line_point_2):
     # line_temp.show_line_function()
     # line_temp.plot_line()
     orthogonal_line = line_temp.orthogonal_line_cross_point(point_test)
-    # orthogonal_line.plot_line()
+    orthogonal_line.plot_line()
     # orthogonal_line.show_line_function()
     # orthogonal_line.plot_line()
     # orthogonal_line = Line(orthogonal_line_list[0], orthogonal_line_list[1], orthogonal_line_list[2])
@@ -315,8 +315,8 @@ def main():
     p_obs.plot_point()
     point_goal = Point(15, 0)
     point_goal.plot_point()
-    path = potential_get_path(safe_range_polygon, point_start, point_goal, point_centroid)
-    plot_path(path)
+    # path = potential_get_path(safe_range_polygon, point_start, point_goal, point_centroid)
+    # plot_path(path)
     plt.show()
 
 

@@ -79,15 +79,16 @@ class Point:
     def find_distance_between_points(self, point_to_go):
         return math.sqrt((self.x - point_to_go.x)**2 + (self.y - point_to_go.y)**2)
 
+    #
     def find_line_point_to_point(self, point_to_go):
         if self.x == point_to_go.x:
             a = 0
             b = 1
-            c = self.x
+            c = - self.x
         elif self.y == point_to_go.y:
             a = 1
             b = 0
-            c = self.y
+            c = - self.y
         else:
             m = (point_to_go.y - self.y) / (point_to_go.x - self.x)
             h = m * self.x - self.y
